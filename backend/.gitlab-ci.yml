@@ -1,0 +1,155 @@
+# This file is a template, and might need editing before it works on your project.
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/ee/development/cicd/templates.html
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Docker.gitlab-ci.yml
+
+# Build a Docker image with CI/CD and push to the GitLab registry.
+# Docker-in-Docker documentation: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
+#
+# This template uses one generic job with conditional builds
+# for the default branch and all other (MR) branches.
+
+include:
+  - template: Terraform/Base.gitlab-ci.yml
+  - template: Jobs/SAST-IaC.gitlab-ci.yml
+  - 'infra/production/.gitlab-ci.yml'
+
+image: '$CI_TEMPLATE_REGISTRY_HOST/gitlab-org/terraform-images/stable:latest'
+
+variables:
+  TF_VAR_AWS_ACCESS_KEY_ID: '$AWS_ACCESS_KEY_ID'
+  TF_VAR_AWS_SECRET_ACCESS_KEY: '$AWS_SECRET_ACCESS_KEY'
+  TF_STATE_NAME: default
+  TF_CACHE_KEY: default
+
+stages:
+  - test
+  - validate
+  - build
+  - deploy
+  - cleanup
+
+cache:
+  paths:
+    - node_modules/
+
+lint-job:
+  image: node:20-alpine
+  stage: test
+  before_script:
+    - yarn install --immutable
+  script:
+    - yarn run lint
+
+test-job:
+  image: node:20-alpine
+  stage: test
+  before_script:
+    - yarn install --immutable
+  script:
+    - yarn test
+
+docker-build:
+  image: docker:cli
+  stage: build
+  services:
+    - name: docker:23.0.1-dind
+      alias: docker
+  variables:
+    DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker build --pull -t "$DOCKER_IMAGE_NAME" .
+    - docker push "$DOCKER_IMAGE_NAME"
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+        docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
+        docker push "$CI_REGISTRY_IMAGE:latest"
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH
+      exists:
+        - Dockerfile
+
+deploy-job-production:
+  stage: deploy
+  image: ubuntu:latest
+  variables:
+    SSH_PRIVATE_KEY: $AWS_PRIVATE_SSH_KEY
+    SSH_PORT: 22
+    SSH_USER: ec2-user
+    SSH_HOSTS: $AWS_HOST_PROD_IP_ADDRESS_1, $AWS_HOST_PROD_IP_ADDRESS_2
+    JWT_ACCESS_SECRET: $JWT_ACCESS_SECRET
+    JWT_REFRESH_SECRET: $JWT_REFRESH_SECRET
+    DB_URI: $DB_URI
+  before_script:
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client wget gnupg -y )'
+    - wget -qO- https://get.docker.com/gpg | apt-key add -
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - touch ~/.ssh/config
+    - touch ~/.ssh/known_hosts
+    - chmod -R 400 ~/.ssh
+    - |
+      for SSH_HOST in $(echo $SSH_HOSTS | tr "," "\n")
+      do
+        echo $SSH_HOST
+        ssh-keyscan $SSH_HOST >> ~/.ssh/known_hosts
+      done
+    - '[[ -f /.dockerinit ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - |
+      for SSH_HOST in $(echo $SSH_HOSTS | tr "," "\n")
+      do
+        ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "sudo docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY""
+        ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "sudo docker pull $CI_REGISTRY/saxion.nl/hbo-ict/aad/backend/33"
+        ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "sudo docker rm --force podcastito-backend"
+        ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "sudo docker run -d --name podcastito-backend -p 5500:5500 --env JWT_ACCESS_SECRET=\"$JWT_ACCESS_SECRET\" --env JWT_REFRESH_SECRET=\"$JWT_REFRESH_SECRET\" --env DB_URI=\"$DB_URI\" --env DB_NAME=\"$DB_NAME\" $CI_REGISTRY/saxion.nl/hbo-ict/aad/backend/33" 
+      done
+  when: manual
+  only:
+    - main
+
+deploy-job-staging:
+  stage: deploy
+  image: ubuntu:latest
+  variables:
+    SSH_PRIVATE_KEY: $AWS_PRIVATE_SSH_KEY_STAGING
+    SSH_PORT: 22
+    SSH_USER: ec2-user
+    SSH_HOSTS: $AWS_HOST_STAGING_IP_ADDRESS_1, $AWS_HOST_STAGING_IP_ADDRESS_2
+    JWT_ACCESS_SECRET: $JWT_ACCESS_SECRET
+    JWT_REFRESH_SECRET: $JWT_REFRESH_SECRET
+    DB_URI: $DB_URI
+    DB_NAME: $DB_NAME
+  before_script:
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client wget gnupg -y )'
+    - wget -qO- https://get.docker.com/gpg | apt-key add -
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - touch ~/.ssh/config
+    - touch ~/.ssh/known_hosts
+    - chmod -R 400 ~/.ssh
+    - |
+      for SSH_HOST in $(echo $SSH_HOSTS | tr "," "\n")
+      do
+        echo $SSH_HOST
+        ssh-keyscan $SSH_HOST >> ~/.ssh/known_hosts
+      done
+    - '[[ -f /.dockerinit ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - |
+      for SSH_HOST in $(echo $SSH_HOSTS | tr "," "\n")
+      do
+        ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "sudo docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY""
+        ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "sudo docker pull $CI_REGISTRY/saxion.nl/hbo-ict/aad/backend/33"
+        ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "sudo docker rm --force podcastito-backend"
+        ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "sudo docker run -d --name podcastito-backend -p 5500:5500 --env JWT_ACCESS_SECRET=\"$JWT_ACCESS_SECRET\" --env JWT_REFRESH_SECRET=\"$JWT_REFRESH_SECRET\" --env DB_URI=\"$DB_URI\" --env DB_NAME=\"$DB_NAME\" $CI_REGISTRY/saxion.nl/hbo-ict/aad/backend/33"  
+      done
+  when: manual
+  only:
+    - develop

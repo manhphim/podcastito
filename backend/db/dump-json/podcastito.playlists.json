@@ -1,0 +1,28 @@
+[{
+  "_id": {
+    "$oid": "653eade71f4cfb006deecbea"
+  },
+  "deletedAt": null,
+  "isDeleted": false,
+  "name": "Test",
+  "episodes": [],
+  "user": "653ea1852efd829ded46eb54",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "653eaecb2d1f674353405b6b"
+  },
+  "createdAt": {
+    "$numberLong": "1698606792117"
+  },
+  "updatedAt": {
+    "$numberLong": "1698606792117"
+  },
+  "deletedAt": null,
+  "isDeleted": false,
+  "name": "Test",
+  "episodes": [],
+  "user": "653ea1852efd829ded46eb54",
+  "__v": 0
+}]

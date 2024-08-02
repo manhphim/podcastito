@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: podcastito-backend
+    networks:
+      - podcastito-network
+    ports:
+      - '3000:3000'
+    depends_on:
+      - mongo
+    env_file:
+      - .env.development
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  mongo:
+    build:
+      context: .
+      dockerfile: Dockerfile.mongo
+    volumes:
+      - mongodb_data:/data/db
+      - ./dump:/dump
+    networks:
+      - podcastito-network
+    env_file:
+      - .env.development
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${DB_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD}
+
+volumes:
+  mongodb_data:
+networks:
+  podcastito-network:
+    driver: bridge

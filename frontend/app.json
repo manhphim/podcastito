@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "podcast-manager",
+    "slug": "podcast-manager",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "owner": "podcastito",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"],
+        "NSFaceIDUsageDescription": "$(PRODUCT_NAME) Authentication with TouchId or FaceID"
+      },
+      "bundleIdentifier": "com.podcastito",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.podcastito"
+    },
+    "web": {
+      "build": {
+        "babel": {
+          "include": ["@ui-kitten/components", "@ui-kitten/eva-icons"]
+        }
+      }
+    },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "91474f8f-1039-4f76-9f83-ba6776e0da0a"
+      }
+    }
+  }
+}

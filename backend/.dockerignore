@@ -1,0 +1,110 @@
+# Ignore node_modules directory
+node_modules
+
+# Ignore log files
+*.log
+
+# Ignore npm debug log
+npm-debug.log
+
+# Ignore yarn debug log
+yarn-debug.log
+
+# Ignore yarn error log
+yarn-error.log
+
+# Ignore .env files
+.env*
+
+# Ignore .DS_Store files (macOS)
+.DS_Store
+
+# Ignore .vscode directory (Visual Studio Code)
+.vscode
+
+# Ignore .idea directory (JetBrains IDEs)
+.idea
+
+# Ignore .eslintcache file (ESLint)
+.eslintcache
+
+# Ignore .node_repl_history file (Node.js REPL history)
+.node_repl_history
+
+# Ignore coverage directory (Istanbul code coverage reports)
+coverage
+
+# Ignore dist directory (built files)
+dist
+
+# Ignore build directory (built files)
+build
+
+# Ignore .nyc_output directory (NYC code coverage reports)
+.nyc_output
+
+# Ignore .cache directory (Gatsby.js cache)
+.cache
+
+# Ignore public directory (Gatsby.js public files)
+public
+
+# Ignore .next directory (Next.js build files)
+.next
+
+# Ignore out directory (Next.js build files)
+out
+
+# Ignore .sonar directory (SonarQube analysis files)
+.sonar
+
+# Ignore .serverless directory (Serverless Framework build files)
+.serverless
+
+# Ignore .webpack directory (Webpack build files)
+.webpack
+
+# Ignore .parcel-cache directory (Parcel build cache)
+.parcel-cache
+
+# Ignore .yarn/cache directory (Yarn package cache)
+.yarn/cache
+
+# Ignore .yarn/unplugged directory (Yarn unplugged packages)
+.yarn/unplugged
+
+# Ignore .yarn/build-state.yml file (Yarn build state)
+.yarn/build-state.yml
+
+# Ignore .yarn/install-state.gz file (Yarn install state)
+.yarn/install-state.gz
+
+# Ignore .yarn/plugins directory (Yarn plugins)
+.yarn/plugins
+
+# Ignore .yarn/releases directory (Yarn releases)
+.yarn/releases
+
+# Ignore .yarnrc.yml file (Yarn configuration)
+.yarnrc.yml
+
+# Ignore .pnp.* files (Yarn Plug'n'Play files)
+.pnp.*
+
+# Ignore diagram
+diagram/
+
+dump-json/
+
+data/
+
+dump/
+
+poll-job/
+
+infra/
+
+.config/
+
+
+

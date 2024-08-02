@@ -1,0 +1,30 @@
+import { ImageSourcePropType } from 'react-native';
+
+export type Episode = {
+  id: string;
+  title: string;
+  link: string;
+  description: string;
+  guid: string;
+  datePublished: number;
+  datePublishedPretty: string;
+  dateCrawled: number;
+  enclosureUrl: string;
+  enclosureType: string;
+  enclosureLength: number;
+  duration: number;
+  explicit: number;
+  episode: null;
+  episodeType: string;
+  season: number;
+  image: string;
+  feedItunesId: number;
+  feedImage: string;
+  feedId: number;
+  feedLanguage: string;
+  feedDead: number;
+  feedDuplicateOf: null;
+  chaptersUrl: string | null;
+  transcriptUrl: string | null;
+  usedImage: ImageSourcePropType;
+};
